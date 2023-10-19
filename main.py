@@ -5,7 +5,7 @@ import pandas as pd
 
 
 def main():
-    df = pd.read_csv("ejemplo.csv")
+    df = pd.read_csv("examples/ejemplo.csv")
 
     print(list(df.columns))
 
