@@ -13,5 +13,5 @@
 Para ejecutar el programa, se debe ejecutar el siguiente comando:
 
 ```bash	
-python main.py <nombre_tabla1> <direccion_archivo1> ... <nombre_tablaN> <direccion_archivoN>
+python main.py <query> <nombre_tabla1> <direccion_archivo1> ... <nombre_tablaN> <direccion_archivoN>
 ```

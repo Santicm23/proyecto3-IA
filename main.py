@@ -1,13 +1,19 @@
 
-import sys
-
 import pandas as pd
+
+from src.helpers import read_args
 
 
 def main():
-    df = pd.read_csv("examples/ejemplo.csv")
+    args = read_args()
 
-    print(list(df.columns))
+    tables: list[pd.DataFrame] = []
+
+    for table in args['tables']:
+        tables.append(pd.read_csv(table['path_to_csv']))
+
+    print(args)
+
 
 if __name__ == "__main__":
     main()
