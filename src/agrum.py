@@ -1,16 +1,6 @@
 
-import numpy as np
-import pyAgrum as gum
 import pandas as pd
-
-
-def ejemplo(tables: list[pd.DataFrame]) -> None:
-    bn = bn_from_dftables(tables)
-
-    print(bn)
-    for table in tables:
-        print(table.Name)
-        print(bn.cpt(table.Name[0].upper()))
+import pyAgrum as gum
 
 
 def bn_from_dftables(tables: list[pd.DataFrame]) -> gum.BayesNet:
