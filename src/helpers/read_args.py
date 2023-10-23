@@ -21,7 +21,8 @@ def read_args() -> Args:
             table_name = arg
         else:
             path_to_csv = arg
-            args['tables'].append(
-                {'table_name': table_name, 'table': pd.DataFrame(), 'path_to_csv': path_to_csv})
+            df = pd.read_csv(path_to_csv)
+            df.Name = table_name
+            args['tables'].append(df)
 
     return args
