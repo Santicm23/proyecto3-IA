@@ -3,7 +3,7 @@ import pyAgrum as gum
 import pandas as pd
 
 
-def ejemplo() -> None:
+def ejemplo(tables: list[pd.DataFrame]) -> None:
     bn = gum.BayesNet('WaterSprinkler')
     c = gum.LabelizedVariable('c', 'cloudy?', ['A', 'B'])
     c = bn.add(c)
