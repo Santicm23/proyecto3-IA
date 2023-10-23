@@ -2,17 +2,16 @@
 import pandas as pd
 
 from src.helpers import read_args
+from src.inferencia_bayesiana import inferencia_bayesiana, calcular_probabilidad
 
 
 def main():
     args = read_args()
 
-    tables: list[pd.DataFrame] = []
-
     for table in args['tables']:
-        tables.append(pd.read_csv(table['path_to_csv']))
+        table['table'] = pd.read_csv(table['path_to_csv'])
 
-    print(args)
+    print(calcular_probabilidad(args['query'], args['tables']))
 
 
 if __name__ == "__main__":

@@ -1,10 +1,9 @@
 
 import sys
-from typing import TypedDict
 
+import pandas as pd
 
-Table = TypedDict('Args', {'table_name': str, 'path_to_csv': str})
-Args = TypedDict('Args', {'query': str, 'tables': list[Table]})
+from .types import Args
 
 
 def read_args() -> Args:
@@ -23,6 +22,6 @@ def read_args() -> Args:
         else:
             path_to_csv = arg
             args['tables'].append(
-                {'table_name': table_name, 'path_to_csv': path_to_csv})
+                {'table_name': table_name, 'table': pd.DataFrame(), 'path_to_csv': path_to_csv})
 
     return args
