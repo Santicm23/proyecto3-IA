@@ -8,6 +8,13 @@
 - como buscar si es una probabilidad marginal
 - buscar en tabla de probabilidades
 
+### Dependencias
+
+```
+pip install pandas
+pip install pyagrum
+```
+
 ### Ejecución
 
 Para ejecutar el programa, se debe ejecutar el siguiente comando:
