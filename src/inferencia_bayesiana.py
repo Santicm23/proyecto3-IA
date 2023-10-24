@@ -5,10 +5,10 @@ import pyAgrum as gum
 from .agrum import bn_from_dftables
 
 
-def tables_from_vals(vals: list[str], table_names: list[str], bn: gum.BayesNet) -> list[gum.Potential]:
+def tables_from_vals(vals: list[str], table_names: list[str], bn: gum.BayesNet) -> list[str]:
     '''Construye tablas de frecuencia a partir de valores.'''
 
-    tables = []
+    tables: list[str] = []
 
     for val in vals:
         for table_name in table_names:
@@ -30,10 +30,24 @@ def calcular_probabilidad(query: str, tables: list[pd.DataFrame]) -> float:
 
     vals = list(map(lambda s: s.strip(), query.split('∧')))
     vals_tables = tables_from_vals(vals, name_tables, bn)
-    print(vals)
-    print(vals_tables)
+    info_vals = list(zip(vals, vals_tables))
 
-    return 0.0
+    prob = 1.0
+    
+    for info_val in info_vals:
+        val = info_val[0]
+        table_name = info_val[1]
+        deps: list[int] = list(bn.parents(table_name)) # type: ignore
+        if len(deps) == 0:
+            prob *= float(bn.cpt(table_name)[{table_name: val}])
+        else:
+            deps_names = [bn.cpt(i).names[0] for i in deps]
+            filtered = list(filter(lambda info: info[1] in deps_names, info_vals))
+            index = {info[1]: info[0] for info in filtered}
+            index[table_name] = val
+            prob *= float(bn.cpt(table_name)[index])
+
+    return prob
 
 
 # def inferencia_bayesiana() -> None:
