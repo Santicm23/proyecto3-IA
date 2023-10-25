@@ -21,15 +21,19 @@ def tables_from_vals(vals: list[str], table_names: list[str], bn: gum.BayesNet) 
     return tables
 
 
-def calcular_probabilidad(query: str, tables: list[pd.DataFrame]) -> float:
+def vals_from_table(table: str, bn: gum.BayesNet) -> list[str]:
+    '''Construye valores a partir de una tabla de frecuencia.'''
+
+    discVariable: gum.DiscreteVariable = bn.cpt(table).variablesSequence()[0]
+
+    return discVariable.labels()
+
+
+def calcular_probabilidad(query: str, bn: gum.BayesNet, table_names: list[str]) -> float:
     '''Calcula la probabilidad de una query.'''
 
-    name_tables = [table.Name[0].upper() for table in tables]
-
-    bn = bn_from_dftables(tables)
-
     vals = list(map(lambda s: s.strip(), query.split('∧')))
-    vals_tables = tables_from_vals(vals, name_tables, bn)
+    vals_tables = tables_from_vals(vals, table_names, bn)
     info_vals = list(zip(vals, vals_tables))
 
     prob = 1.0
@@ -50,5 +54,42 @@ def calcular_probabilidad(query: str, tables: list[pd.DataFrame]) -> float:
     return prob
 
 
-# def inferencia_bayesiana() -> None:
-#     ...
+def inferencia_bayesiana(query: str, tables: list[pd.DataFrame]) -> dict[str, float]:
+    '''Realiza la inferencia bayesiana.'''
+
+    bn = bn_from_dftables(tables)
+
+    table_names = [bn.cpt(i).names[0] for i in range(bn.size())]
+
+    X, E = filter(lambda s: s.strip(), query.split('|'))
+
+    X = X[0].capitalize()
+    X_vals = vals_from_table(X, bn)
+
+    E_vals = list(map(lambda s: s.strip(), E.split('∧')))
+
+    E_tables = tables_from_vals(E_vals, table_names, bn)
+
+    Y_tables = list(filter(lambda table: table not in E_tables and table != X, table_names))
+    Y_vals = list(map(lambda table: vals_from_table(table, bn), Y_tables))
+
+    m_probs = []
+    inference: dict[str, float] = {}
+    for i, x_val in enumerate(X_vals):
+        m_probs.append([])
+        inference[x_val] = 0.0
+        for y_vals in Y_vals:
+            for y_val in y_vals:
+                condition = ' ∧ '.join(E_vals + [x_val, y_val])
+                prob = calcular_probabilidad(condition, bn, table_names)
+
+                m_probs[i].append(prob)
+        
+        inference[x_val] = sum(m_probs[i])
+    
+    alpha = 1 / sum(inference.values())
+
+    for x_val in inference.keys():
+        inference[x_val] *= alpha
+
+    return inference
