@@ -1,4 +1,6 @@
 
+from itertools import product
+
 import pandas as pd
 import pyAgrum as gum
 
@@ -83,12 +85,14 @@ def inferencia_bayesiana(query: str, tables: list[pd.DataFrame]) -> dict[str, fl
             prob = calcular_probabilidad(condition, bn, table_names)
             inference[x_val] = prob
             continue
-        for y_vals in Y_vals:
-            for y_val in y_vals:
-                condition = ' ∧ '.join(E_vals + [x_val, y_val])
-                prob = calcular_probabilidad(condition, bn, table_names)
 
-                m_probs[i].append(prob)
+        combinations = product(*Y_vals)
+
+        for combination in combinations:
+            condition = ' ∧ '.join(E_vals + [x_val] + list(combination))
+            prob = calcular_probabilidad(condition, bn, table_names)
+
+            m_probs[i].append(prob)
         
         inference[x_val] = sum(m_probs[i])
     
@@ -99,13 +103,25 @@ def inferencia_bayesiana(query: str, tables: list[pd.DataFrame]) -> dict[str, fl
 
     return inference
 
-def verificar_inferencia(query: str, tables: list[pd.DataFrame]):
+def verificar_inferencia(query: str, tables: list[pd.DataFrame]) -> None:
     '''Verifica la inferencia bayesiana.'''
 
     bn = bn_from_dftables(tables)
 
+    table_names = [bn.cpt(i).names[0] for i in range(bn.size())]
+
+    X, E = filter(lambda s: s.strip(), query.split('|'))
+
+    X = X[0].capitalize()
+
+    E_vals = list(map(lambda s: s.strip(), E.split('∧')))
+
+    E_tables = tables_from_vals(E_vals, table_names, bn)
+
+    evidence = {E_tables[i]: E_vals[i] for i in range(len(E_tables))}
+
     ie = gum.LazyPropagation(bn)
 
-    ie.setEvidence({'M': 'no', 'T': 'delayed', 'A': 'miss'})
+    ie.setEvidence(evidence)
     ie.makeInference()
-    print(ie.posterior('R'))
+    print(ie.posterior(X))
