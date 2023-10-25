@@ -78,6 +78,11 @@ def inferencia_bayesiana(query: str, tables: list[pd.DataFrame]) -> dict[str, fl
     for i, x_val in enumerate(X_vals):
         m_probs.append([])
         inference[x_val] = 0.0
+        if len(Y_tables) == 0:
+            condition = ' ∧ '.join(E_vals + [x_val])
+            prob = calcular_probabilidad(condition, bn, table_names)
+            inference[x_val] = prob
+            continue
         for y_vals in Y_vals:
             for y_val in y_vals:
                 condition = ' ∧ '.join(E_vals + [x_val, y_val])
@@ -93,3 +98,14 @@ def inferencia_bayesiana(query: str, tables: list[pd.DataFrame]) -> dict[str, fl
         inference[x_val] *= alpha
 
     return inference
+
+def verificar_inferencia(query: str, tables: list[pd.DataFrame]):
+    '''Verifica la inferencia bayesiana.'''
+
+    bn = bn_from_dftables(tables)
+
+    ie = gum.LazyPropagation(bn)
+
+    ie.setEvidence({'M': 'no', 'T': 'delayed', 'A': 'miss'})
+    ie.makeInference()
+    print(ie.posterior('R'))
