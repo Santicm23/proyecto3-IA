@@ -211,28 +211,3 @@ def inferencia_bayesiana(query: str, tables: list[pd.DataFrame]) -> dict[str, fl
     # Finalmente, la función devuelve el diccionario inference que contiene las probabilidades condicionales
     # normalizadas para diferentes valores de la variable de interés (X).
     return inference
-
-
-def verificar_inferencia(query: str, tables: list[pd.DataFrame]) -> None:
-    '''Verifica la inferencia bayesiana.'''
-
-    bn = bn_from_dftables(tables)
-
-    table_names = [bn.cpt(i).names[0] for i in range(bn.size())]
-
-    
-    X, E = filter(lambda s: s.strip(), query.split('|')) if '|' in query else (query, None)
-
-    X = X[0].capitalize()
-
-    E_vals = list(map(lambda s: s.strip(), E.split('∧'))) if E else []
-
-    E_tables = tables_from_vals(E_vals, table_names, bn)
-
-    evidence = {E_tables[i]: E_vals[i] for i in range(len(E_tables))}
-
-    ie = gum.LazyPropagation(bn)
-
-    ie.setEvidence(evidence)
-    ie.makeInference()
-    print(ie.posterior(X))
