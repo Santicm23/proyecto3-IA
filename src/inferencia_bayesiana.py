@@ -40,9 +40,7 @@ def calcular_probabilidad(query: str, bn: gum.BayesNet, table_names: list[str]) 
 
     prob = 1.0
 
-    for info_val in info_vals:
-        val = info_val[0]
-        table_name = info_val[1]
+    for val, table_name in info_vals:
         deps: list[int] = list(bn.parents(table_name))  # type: ignore
         if len(deps) == 0:
             prob *= float(bn.cpt(table_name)[{table_name: val}])
