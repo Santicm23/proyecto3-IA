@@ -129,9 +129,6 @@ def inferencia_bayesiana(query: str, tables: list[pd.DataFrame]) -> dict[str, fl
     # el operador | como separador. Se eliminan los espacios en blanco alrededor de las partes usando la función strip.
     X, E = filter(lambda s: s.strip(), query.split('|')) if '|' in query else (query, None)
 
-    X = X[0].capitalize()
-
-
     # Se capitaliza la primera letra de la variable de interés (X) para asegurarse de que coincida con la convención de
     # nombres utilizada en la red bayesiana.
     X = X[0].capitalize()
@@ -211,3 +208,72 @@ def inferencia_bayesiana(query: str, tables: list[pd.DataFrame]) -> dict[str, fl
     # Finalmente, la función devuelve el diccionario inference que contiene las probabilidades condicionales
     # normalizadas para diferentes valores de la variable de interés (X).
     return inference
+
+
+def probabilidad_condicional(query: str, tables: list[pd.DataFrame]) -> float:
+
+    bn = bn_from_dftables(tables)
+
+    # Se crea una lista table_names que contiene los nombres de todas las tablas de probabilidad condicional en la red
+    # bayesiana. Se utiliza un bucle for para recorrer todas las tablas y extraer sus nombres.
+    table_names = [bn.cpt(i).names[0] for i in range(bn.size())]
+
+    # Se divide la consulta query en dos partes: la variable de interés (X) y las variables de evidencia (E), utilizando
+    # el operador | como separador. Se eliminan los espacios en blanco alrededor de las partes usando la función strip.
+    X, E = filter(lambda s: s.strip(), query.split('|')) if '|' in query else (query, None)
+
+    # Se divide la parte de evidencia (E) en sus componentes individuales utilizando el operador ∧ como separador y se
+    # eliminan los espacios en blanco alrededor de cada componente. Los valores de evidencia se almacenan en la lista E_vals.
+    E_vals = list(map(lambda s: s.strip(), E.split('∧'))) if E else []
+
+    # Se utiliza la función tables_from_vals para determinar a qué tablas de frecuencia corresponden los valores de
+    # evidencia (E_vals). El resultado se almacena en la lista E_tables.
+    E_tables = tables_from_vals(E_vals, table_names, bn) if E else []
+
+    # Se crea una lista Y_tables que contiene los nombres de las tablas que no son ni de evidencia (E) ni de la variable
+    # de interés (X). Esto se hace utilizando la función filter y una función lambda que filtra las tablas que no están
+    # en E_tables y no son igual a X.
+    Y_tables = list(
+        filter(lambda table: table not in E_tables and table != X, table_names))
+
+    # Se utiliza la función vals_from_table para obtener los valores posibles de todas las variables en Y_tables.
+    # Estos valores se almacenan en la lista Y_vals.
+    Y_vals = list(map(lambda table: vals_from_table(table, bn), Y_tables))
+
+    # Se inicializan dos listas vacías: m_probs para almacenar las probabilidades condicionales y inference como un
+    # diccionario para almacenar las probabilidades resultantes.
+    m_probs = []
+
+    # Se verifica si no hay variables de evidencia en la consulta. Si es así, se calcula la probabilidad
+    # directamente utilizando la función calcular_probabilidad.
+    if len(Y_tables) == 0:
+        # Se construye la condición de consulta concatenando los valores de evidencia y X con el operador "∧"
+        # utilizando join.
+        condition = ' ∧ '.join(E_vals + [X])
+        # Se calcula la probabilidad condicional usando la función calcular_probabilidad y se almacena en prob.
+        prob = calcular_probabilidad(condition, bn, table_names)
+        # La probabilidad calculada se almacena en el diccionario inference para X.
+        m_probs.append(prob)
+        # Se continúa con la siguiente iteración del bucle.
+    else:
+
+        # Si hay variables de evidencia, se generan todas las combinaciones posibles de valores para las variables en
+        # Y_vals utilizando la función product.
+        combinations = product(*Y_vals)
+
+        # Se inicia un bucle que recorre las combinaciones de valores de las variables de evidencia.
+        for combination in combinations:
+            # Se construye la condición de consulta concatenando los valores de evidencia, X y la combinación actual
+            # de valores con el operador "∧".
+            condition = ' ∧ '.join(E_vals + [X] + list(combination))
+            # Se calcula la probabilidad condicional utilizando la función calcular_probabilidad y se almacena en prob.
+            prob = calcular_probabilidad(condition, bn, table_names)
+
+            # La probabilidad se agrega a la lista correspondiente en m_probs.
+            m_probs.append(prob)
+
+    # Se calcula la probabilidad acumulativa para X sumando todas las probabilidades en m_probs.
+
+    return sum(m_probs)
+
+
