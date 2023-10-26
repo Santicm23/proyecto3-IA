@@ -127,7 +127,10 @@ def inferencia_bayesiana(query: str, tables: list[pd.DataFrame]) -> dict[str, fl
 
     # Se divide la consulta query en dos partes: la variable de interés (X) y las variables de evidencia (E), utilizando
     # el operador | como separador. Se eliminan los espacios en blanco alrededor de las partes usando la función strip.
-    X, E = filter(lambda s: s.strip(), query.split('|'))
+    X, E = filter(lambda s: s.strip(), query.split('|')) if '|' in query else (query, None)
+
+    X = X[0].capitalize()
+
 
     # Se capitaliza la primera letra de la variable de interés (X) para asegurarse de que coincida con la convención de
     # nombres utilizada en la red bayesiana.
@@ -139,11 +142,11 @@ def inferencia_bayesiana(query: str, tables: list[pd.DataFrame]) -> dict[str, fl
 
     # Se divide la parte de evidencia (E) en sus componentes individuales utilizando el operador ∧ como separador y se
     # eliminan los espacios en blanco alrededor de cada componente. Los valores de evidencia se almacenan en la lista E_vals.
-    E_vals = list(map(lambda s: s.strip(), E.split('∧')))
+    E_vals = list(map(lambda s: s.strip(), E.split('∧'))) if E else []
 
     # Se utiliza la función tables_from_vals para determinar a qué tablas de frecuencia corresponden los valores de
     # evidencia (E_vals). El resultado se almacena en la lista E_tables.
-    E_tables = tables_from_vals(E_vals, table_names, bn)
+    E_tables = tables_from_vals(E_vals, table_names, bn) if E else []
 
     # Se crea una lista Y_tables que contiene los nombres de las tablas que no son ni de evidencia (E) ni de la variable
     # de interés (X). Esto se hace utilizando la función filter y una función lambda que filtra las tablas que no están
@@ -208,3 +211,28 @@ def inferencia_bayesiana(query: str, tables: list[pd.DataFrame]) -> dict[str, fl
     # Finalmente, la función devuelve el diccionario inference que contiene las probabilidades condicionales
     # normalizadas para diferentes valores de la variable de interés (X).
     return inference
+
+
+def verificar_inferencia(query: str, tables: list[pd.DataFrame]) -> None:
+    '''Verifica la inferencia bayesiana.'''
+
+    bn = bn_from_dftables(tables)
+
+    table_names = [bn.cpt(i).names[0] for i in range(bn.size())]
+
+    
+    X, E = filter(lambda s: s.strip(), query.split('|')) if '|' in query else (query, None)
+
+    X = X[0].capitalize()
+
+    E_vals = list(map(lambda s: s.strip(), E.split('∧'))) if E else []
+
+    E_tables = tables_from_vals(E_vals, table_names, bn)
+
+    evidence = {E_tables[i]: E_vals[i] for i in range(len(E_tables))}
+
+    ie = gum.LazyPropagation(bn)
+
+    ie.setEvidence(evidence)
+    ie.makeInference()
+    print(ie.posterior(X))
