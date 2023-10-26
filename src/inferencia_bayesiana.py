@@ -80,10 +80,8 @@ def calcular_probabilidad(query: str, bn: gum.BayesNet, table_names: list[str]) 
     # Esta variable se utiliza para realizar el cálculo acumulativo de probabilidades.
 
     # Se inicia un bucle que recorre las tuplas de info_vals.
-    for info_val in info_vals:
+    for val, table_name in info_vals:
         # Se extraen el valor de la consulta (val) y el nombre de la tabla (table_name) de cada tupla.
-        val = info_val[0]
-        table_name = info_val[1]
         # Se obtienen las dependencias de la tabla table_name en forma de una lista de nombres de las tablas padre.
         # Esta información se almacena en deps.
         deps: list[int] = list(bn.parents(table_name))  # type: ignore
