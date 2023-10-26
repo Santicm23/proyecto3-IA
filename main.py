@@ -1,7 +1,6 @@
 
 from src.helpers import read_args
 from src.inferencia_bayesiana import calcular_probabilidad
-# from src.agrum import bn_from_dftables
 
 
 def main():
